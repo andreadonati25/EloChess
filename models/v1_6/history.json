@@ -1,0 +1,176 @@
+{
+  "runs": [
+    {
+      "started_at_utc": "2026-11-07T02:23:44.831367+00:00",
+      "ended_at_utc": "2026-11-09T22:32:33.764319+00:00",
+      "args": {
+        "data_dir": "data/processed/2015-05",
+        "out_dir": "models/v1_6",
+        "vocab": "src/config/move2idx_all.json",
+        "split_file": "data/validation/2015-05_game_split_seed42.json",
+        "validation_fraction": 0.1,
+        "split_seed": 42,
+        "seed": 42,
+        "epochs": 1,
+        "batch_size": 32,
+        "alpha": 0.5,
+        "learning_rate": 0.0003,
+        "dropout": 0.2,
+        "lambda_value": 0.5,
+        "board_head": "flatten",
+        "policy_loss": "outcome_blend",
+        "value_loss": "binary_crossentropy",
+        "optimizer": "adam",
+        "monitor": "val_policy_loss",
+        "patience": 6,
+        "reduce_lr_patience": 2,
+        "reduce_lr_factor": 0.5,
+        "min_learning_rate": 1e-06,
+        "save_every_steps": 5000,
+        "max_files": null,
+        "resume": false,
+        "init_model": "models/v1_5/best.keras"
+      },
+      "history": {
+        "loss": [
+          1.3719981908798218
+        ],
+        "policy_accuracy": [
+          0.38317546248435974
+        ],
+        "policy_loss": [
+          1.078255295753479
+        ],
+        "policy_top3": [
+          0.6263227462768555
+        ],
+        "policy_top5": [
+          0.7312800884246826
+        ],
+        "policy_unweighted_ce": [
+          2.1522586345672607
+        ],
+        "val_loss": [
+          1.3394964933395386
+        ],
+        "val_policy_accuracy": [
+          0.3969115614891052
+        ],
+        "val_policy_loss": [
+          1.0446116924285889
+        ],
+        "val_policy_top3": [
+          0.6440606713294983
+        ],
+        "val_policy_top5": [
+          0.7467847466468811
+        ],
+        "val_policy_unweighted_ce": [
+          2.0950326919555664
+        ],
+        "val_value_brier": [
+          0.1883191168308258
+        ],
+        "val_value_loss": [
+          0.5896713137626648
+        ],
+        "value_brier": [
+          0.18421603739261627
+        ],
+        "value_loss": [
+          0.5788783431053162
+        ],
+        "learning_rate": [
+          0.0003000000142492354
+        ]
+      },
+      "best_metrics": {
+        "loss": {
+          "best_value": 1.3719981908798218,
+          "epoch_in_run": 1,
+          "mode": "min"
+        },
+        "policy_accuracy": {
+          "best_value": 0.38317546248435974,
+          "epoch_in_run": 1,
+          "mode": "max"
+        },
+        "policy_loss": {
+          "best_value": 1.078255295753479,
+          "epoch_in_run": 1,
+          "mode": "min"
+        },
+        "policy_top3": {
+          "best_value": 0.6263227462768555,
+          "epoch_in_run": 1,
+          "mode": "max"
+        },
+        "policy_top5": {
+          "best_value": 0.7312800884246826,
+          "epoch_in_run": 1,
+          "mode": "max"
+        },
+        "policy_unweighted_ce": {
+          "best_value": 2.1522586345672607,
+          "epoch_in_run": 1,
+          "mode": "min"
+        },
+        "val_loss": {
+          "best_value": 1.3394964933395386,
+          "epoch_in_run": 1,
+          "mode": "min"
+        },
+        "val_policy_accuracy": {
+          "best_value": 0.3969115614891052,
+          "epoch_in_run": 1,
+          "mode": "max"
+        },
+        "val_policy_loss": {
+          "best_value": 1.0446116924285889,
+          "epoch_in_run": 1,
+          "mode": "min"
+        },
+        "val_policy_top3": {
+          "best_value": 0.6440606713294983,
+          "epoch_in_run": 1,
+          "mode": "max"
+        },
+        "val_policy_top5": {
+          "best_value": 0.7467847466468811,
+          "epoch_in_run": 1,
+          "mode": "max"
+        },
+        "val_policy_unweighted_ce": {
+          "best_value": 2.0950326919555664,
+          "epoch_in_run": 1,
+          "mode": "min"
+        },
+        "val_value_brier": {
+          "best_value": 0.1883191168308258,
+          "epoch_in_run": 1,
+          "mode": "min"
+        },
+        "val_value_loss": {
+          "best_value": 0.5896713137626648,
+          "epoch_in_run": 1,
+          "mode": "min"
+        },
+        "value_brier": {
+          "best_value": 0.18421603739261627,
+          "epoch_in_run": 1,
+          "mode": "min"
+        },
+        "value_loss": {
+          "best_value": 0.5788783431053162,
+          "epoch_in_run": 1,
+          "mode": "min"
+        },
+        "learning_rate": {
+          "best_value": 0.0003000000142492354,
+          "epoch_in_run": 1,
+          "mode": "max"
+        }
+      }
+    }
+  ]
+}

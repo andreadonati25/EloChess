@@ -1,0 +1,7 @@
+{
+  "monitor": "val_policy_loss",
+  "mode": "min",
+  "best_value": 1.0446116924285889,
+  "epoch_in_run": 1,
+  "updated_at_utc": "2026-11-09T22:32:33.540604+00:00"
+}

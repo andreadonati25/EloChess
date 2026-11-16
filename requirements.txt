@@ -1,0 +1,13 @@
+# Dipendenze Python di EloChess (pipeline, training e valutazione).
+# Le versioni definitive vanno fissate quando si congela l'ambiente di esecuzione.
+numpy
+tensorflow
+python-chess
+pyarrow
+zstandard
+tqdm
+
+# Playground interattivo (scacchiera e analisi manuale)
+streamlit
+
+# Stockfish e' un eseguibile esterno, non un pacchetto pip.

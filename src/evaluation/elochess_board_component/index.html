@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+    body { font-family: system-ui, sans-serif; }
+    .wrap { width: min(100%, 540px); padding: 2px; }
+    .board { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); width: 100%;
+      aspect-ratio: 1; border: 2px solid #4a5846; border-radius: 4px; overflow: hidden;
+      box-shadow: 0 2px 9px rgba(0,0,0,.11); user-select: none; touch-action: none; }
+    .square { position: relative; width: 100%; aspect-ratio: 1; display: flex; align-items: center;
+      justify-content: center; cursor: default; -webkit-user-select: none; user-select: none; }
+    .square.light { background: #ebecd0; }
+    .square.dark  { background: #779556; }
+    .square.last.light { background: #f5f48c; }
+    .square.last.dark { background: #a2af63; }
+    .square.selected { box-shadow: inset 0 0 0 4px rgba(229, 158, 33, .92); }
+    .square.target::after { content: ''; position: absolute; z-index: 2; width: 23%; height: 23%;
+      border-radius: 50%; background: rgba(20, 35, 22, .24); pointer-events: none; }
+    .square.target.occupied::after { width: 87%; height: 87%; background: transparent;
+      border: 5px solid rgba(20, 35, 22, .28); }
+    .square.check { box-shadow: inset 0 0 0 5px rgba(188, 35, 35, .7); }
+    .square.held img { opacity: .3; }
+    /* Coordinate all'interno delle caselle: seguono l'orientamento della scacchiera. */
+    .square-coordinate {
+      position: absolute; z-index: 3; pointer-events: none;
+      font-size: clamp(10px, 1.65vw, 12px); font-weight: 700;
+      line-height: 1; font-family: system-ui, sans-serif;
+      font-variant-numeric: tabular-nums;
+    }
+    .square.light .square-coordinate { color: #55713c; }
+    .square.dark .square-coordinate { color: #eef0d2; }
+    .square-coordinate.rank { top: 3px; left: 3px; }
+    .square-coordinate.file { bottom: 3px; right: 3px; }
+    .piece { width: 95%; height: 95%; object-fit: contain; pointer-events: none; user-select: none;
+      -webkit-user-drag: none; }
+    .ghost { position: fixed; z-index: 9999; pointer-events: none; width: 64px; height: 64px;
+      object-fit: contain; transform: translate(-50%, -50%);
+      filter: drop-shadow(0px 7px 5px rgba(0,0,0,.2)); }
+    .promotion { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center;
+      justify-content: center; background: rgba(5, 18, 12, .55); }
+    .promotion-panel { display: flex; flex-wrap: wrap; gap: 6px; border-radius: 8px; padding: 10px;
+      background: #fff; box-shadow: 0 8px 28px #0005; }
+    .promotion button { border: 1px solid #aaa; background: #f8f8f4; border-radius: 4px;
+      padding: 4px; cursor: pointer; }
+    .promotion button:hover { background: #e2ecd7; }
+    .promotion img { width: 54px; height: 54px; display: block; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div id="board" class="board" role="group" aria-label="Scacchiera EloChess, trascina i pezzi per giocare"></div>
+</div>
+<script>
+  // Il componente usa il protocollo ufficiale Streamlit Components v1, senza librerie di rete.
+  const boardEl = document.getElementById('board');
+  let args = null;
+  let selected = null;
+  let pressed = null;
+  let ghost = null;
+  let activePromotion = null;
+  let serial = 0;
+  let currentFen = null;
+  let currentOrientation = null;
+
+  function send(type, payload = {}) {
+    window.parent.postMessage({isStreamlitMessage: true, type, ...payload}, '*');
+  }
+  function setHeight() { send('streamlit:setFrameHeight', {height: Math.ceil(document.body.scrollHeight + 4)}); }
+  function fileRank(square) { return [square.charCodeAt(0) - 97, parseInt(square[1], 10) - 1]; }
+  function destinationSquares(from) {
+    return (args?.legal || []).filter(x => x.startsWith(from)).map(x => x.slice(2,4));
+  }
+  function canStart(square) {
+    if (!args || !args.pieces || !(square in args.pieces)) return false;
+    const symbol = args.pieces[square];
+    const whitePiece = symbol === symbol.toUpperCase();
+    return (args.turn === 'white') === whitePiece && destinationSquares(square).length > 0;
+  }
+  function render() {
+    if (!args) return;
+    const files = args.orientation === 'black' ? 'hgfedcba' : 'abcdefgh';
+    const ranks = args.orientation === 'black' ? '12345678' : '87654321';
+    boardEl.replaceChildren();
+    for (const rank of ranks) for (const file of files) {
+      const sq = `${file}${rank}`;
+      const [f, r] = fileRank(sq);
+      const node = document.createElement('div');
+      const dark = ((f + r) % 2 === 0);
+      node.className = `square ${dark ? 'dark' : 'light'}`;
+      node.dataset.square = sq;
+      if ((args.last_move || []).includes(sq)) node.classList.add('last');
+      if (sq === args.check) node.classList.add('check');
+      if (sq === selected) node.classList.add('selected');
+      if (selected && destinationSquares(selected).includes(sq)) node.classList.add('target');
+      // Come nelle scacchiere online: numeri sul bordo visivo sinistro,
+      // lettere sul bordo visivo inferiore, anche dopo il cambio di visuale.
+      if (file === files[0]) {
+        const coordRank = document.createElement('span');
+        coordRank.className = 'square-coordinate rank';
+        coordRank.textContent = rank;
+        coordRank.setAttribute('aria-hidden', 'true');
+        node.appendChild(coordRank);
+      }
+      if (rank === ranks[ranks.length - 1]) {
+        const coordFile = document.createElement('span');
+        coordFile.className = 'square-coordinate file';
+        coordFile.textContent = file;
+        coordFile.setAttribute('aria-hidden', 'true');
+        node.appendChild(coordFile);
+      }
+      const symbol = args.pieces?.[sq];
+      if (symbol) {
+        node.classList.add('occupied');
+        const img = document.createElement('img');
+        img.className = 'piece';
+        img.alt = symbol;
+        img.src = args.images[symbol];
+        img.draggable = false;
+        node.appendChild(img);
+        if (canStart(sq)) node.style.cursor = 'grab';
+      }
+      boardEl.appendChild(node);
+    }
+    setHeight();
+  }
+  function emitMove(uci) {
+    const eventId = `${Date.now()}-${++serial}`;
+    selected = null;
+    send('streamlit:setComponentValue', {value: {id: eventId, fen: args.fen, uci}, dataType:'json'});
+  }
+  function chooseMove(from, to) {
+    const matches = (args?.legal || []).filter(x => x.slice(0,2) === from && x.slice(2,4) === to);
+    if (!matches.length) return false;
+    if (matches.length === 1) {
+      emitMove(matches[0]);
+    } else {
+      showPromotion(matches);
+    }
+    return true;
+  }
+  function showPromotion(choices) {
+    const white = args.turn === 'white';
+    const overlay = document.createElement('div');
+    overlay.className = 'promotion';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-label', 'Scegli il pezzo per la promozione');
+    const panel = document.createElement('div');
+    panel.className = 'promotion-panel';
+    for (const sym of 'qrbn') {
+      const uci = choices.find(x => x.endsWith(sym));
+      if (!uci) continue;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.title = ({q:'Donna',r:'Torre',b:'Alfiere',n:'Cavallo'})[sym];
+      const img = document.createElement('img');
+      img.alt = btn.title;
+      img.src = args.images[white ? sym.toUpperCase() : sym];
+      btn.appendChild(img);
+      btn.addEventListener('click', () => { overlay.remove(); activePromotion = null; emitMove(uci); });
+      panel.appendChild(btn);
+    }
+    overlay.appendChild(panel);
+    overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.remove(); activePromotion = null; render(); } });
+    activePromotion = overlay;
+    document.body.appendChild(overlay);
+    setHeight();
+  }
+  function squareAt(clientX, clientY) {
+    const elem = document.elementFromPoint(clientX, clientY);
+    return elem?.closest('.square')?.dataset.square || null;
+  }
+  function clearDrag() {
+    if (ghost) ghost.remove();
+    ghost = null;
+    boardEl.querySelectorAll('.held').forEach(el => el.classList.remove('held'));
+    pressed = null;
+  }
+  function dragAt(x, y) {
+    if (!ghost) return;
+    ghost.style.left = `${x}px`;
+    ghost.style.top = `${y}px`;
+  }
+  boardEl.addEventListener('pointerdown', e => {
+    if (!args || activePromotion || e.button !== 0) return;
+    const sq = e.target.closest('.square')?.dataset.square;
+    if (!sq) return;
+    pressed = {sq, x:e.clientX, y:e.clientY, moved:false, canDrag:canStart(sq)};
+    try { boardEl.setPointerCapture(e.pointerId); } catch (_) { /* browser fallback */ }
+    e.preventDefault();
+  });
+  boardEl.addEventListener('pointermove', e => {
+    if (!pressed || !pressed.canDrag) return;
+    const dist = Math.hypot(e.clientX - pressed.x, e.clientY - pressed.y);
+    if (!pressed.moved && dist > 7) {
+      pressed.moved = true;
+      const img = boardEl.querySelector(`[data-square="${pressed.sq}"] img`);
+      if (img) {
+        ghost = img.cloneNode(true);
+        ghost.className = 'ghost';
+        ghost.style.width = `${img.parentElement.getBoundingClientRect().width}px`;
+        ghost.style.height = ghost.style.width;
+        document.body.appendChild(ghost);
+        img.parentElement.classList.add('held');
+      }
+      selected = pressed.sq;
+      render();
+    }
+    if (pressed.moved) {
+      dragAt(e.clientX, e.clientY);
+      e.preventDefault();
+    }
+  });
+  boardEl.addEventListener('pointerup', e => {
+    if (!pressed) return;
+    const {sq, moved} = pressed;
+    const target = squareAt(e.clientX, e.clientY);
+    clearDrag();
+    try { if (boardEl.hasPointerCapture(e.pointerId)) boardEl.releasePointerCapture(e.pointerId); } catch (_) {}
+    if (moved) {
+      if (target && chooseMove(sq, target)) return;
+      selected = null;
+      render();
+      return;
+    }
+    // Click-to-move di riserva.
+    if (selected && target && target !== selected && chooseMove(selected, target)) return;
+    if (target && canStart(target)) selected = selected === target ? null : target;
+    else selected = null;
+    render();
+  });
+  boardEl.addEventListener('pointercancel', () => { clearDrag(); selected = null; render(); });
+
+  window.addEventListener('message', event => {
+    const data = event.data;
+    if (!data || data.type !== 'streamlit:render') return;
+    const next = data.args || {};
+    if (next.fen !== currentFen || next.orientation !== currentOrientation) {
+      selected = null;
+      clearDrag();
+      currentFen = next.fen;
+      currentOrientation = next.orientation;
+      if (activePromotion) { activePromotion.remove(); activePromotion = null; }
+    }
+    args = next;
+    render();
+  });
+  window.addEventListener('resize', setHeight);
+  send('streamlit:componentReady', {apiVersion: 1});
+  setHeight();
+</script>
+</body>
+</html>

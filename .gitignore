@@ -1,0 +1,12 @@
+# Python e ambienti locali
+__pycache__/
+
+# Dataset e output generati
+data/
+!src/data
+models/stockfish/
+archive/
+*.keras
+
+# Idee
+V2_IDEAS.md
