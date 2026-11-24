@@ -1,4 +1,4 @@
-# WORK PLAN — Learning_AI_EloChess
+# WORK PLAN — EloChess
 
 # 0. Obiettivo del progetto
 
