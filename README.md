@@ -1,4 +1,4 @@
-# Learning_AI_EloChess
+# EloChess
 
 ## Italiano
 
