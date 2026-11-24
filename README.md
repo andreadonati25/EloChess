@@ -17,7 +17,8 @@ L'obiettivo non è imitare Stockfish né sostenere che una mossa vincente in una
 
 La prima versione (**V1.1–V1.6**) è stata addestrata in sei fasi su partite Lichess del 2013, 2014 e 2015 e sottoposta a valutazioni automatiche. Il **Playground** permette di esplorare le mosse suggerite, variare gli Elo e confrontare l'analisi con Stockfish. L'analisi manuale servirà a individuare i punti di forza, i limiti e le idee per la V2.
 
-Il codice e la documentazione sono pensati per essere condivisi; dataset, checkpoint e file di terzi non sono inclusi automaticamente nel repository.
+Stato: sperimentale. Il modello commette ancora errori grossolani.
+Il codice è pubblicato a scopo dimostrativo; dataset, checkpoint e file di terzi non sono inclusi automaticamente nel repository.
 
 Documenti: [`WORK_PLAN.md`](WORK_PLAN.md) (struttura e percorso del progetto), [`VARIABLES.md`](VARIABLES.md) (parametri), [`BENCHMARK_SOURCES.md`](BENCHMARK_SOURCES.md) (benchmark e fonti).
 
